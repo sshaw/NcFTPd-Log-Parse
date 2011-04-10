@@ -3,7 +3,7 @@ use warnings;
 use lib 't/lib';
 
 use TestHelper qw{$XFER_LOG};
-use Test::More tests => 10;
+use Test::More tests => 16;
 
 BEGIN { use_ok('NcFTPd::Log::Parse::Xfer'); }
 
@@ -49,7 +49,7 @@ is_deeply($entries[1], {
 is_deeply($entries[2], {
     time       => '2010-01-11 13:37:20',
     process    => '#u4',
-    operation       => 'M',
+    operation  => 'M',
     pathname   => '/Users/BobABooey/Documents/2001/January/Second/Cal',
     reserved1  => '',
     reserved2  => '',
@@ -60,14 +60,13 @@ is_deeply($entries[2], {
     session_id => 'S0uZ6AAEv9kA'
 });
 
-# rename *** 2nd pathname must be renamed
 is_deeply($entries[3], {
     time       => '2010-01-11 14:35:00',
     process    => '#u4',
     operation  => 'N',
-    pathname   => '/Users/ftp/docs/HP 2011 20100114.xml',
+    source     => '/Users/ftp/docs/HP 2011 20100114.xml',
     reserved1  => 'to',
-    pathname   => '/Users/ftp/docs/HP PART II 2011 20100114.xml',
+    destination=> '/Users/ftp/docs/HP PART II 2011 20100114.xml',
     reserved2  => '',
     user       => 'ftp',
     email      => 'sshaw@lucas.cis.temple.edu',
@@ -112,7 +111,7 @@ is_deeply($entries[5], {
     suffix    => '',
     status    => 'OK',
     type      => 'I',
-    notes     => 'Po',    
+    notes     => 'PoSf',    
     start_of_transfer => 1294214460,
     session_id	      => 'TSQlOwADIaAA',
     starting_size     => 25,
@@ -134,3 +133,24 @@ is_deeply($entries[6], {
     host       => 'my.odd--host.local',
     session_id => 'TSQouwAEEbgA'
 });
+
+
+$parser = NcFTPd::Log::Parse::Xfer->new($XFER_LOG, 
+					expand => 1,
+					filter => sub { 
+					  $_->{operation} eq 'rename' || $_->{operation} eq 'delete'; 
+					});
+@entries = slurp_log($parser);
+is(@entries, 2, 'filter should return 2 log entries');
+is($entries[0]->{operation}, 'delete');
+is($entries[1]->{operation}, 'rename');
+
+$parser = NcFTPd::Log::Parse::Xfer->new($XFER_LOG, 
+					filter => sub { 
+					  $_->{operation} eq 'N' || $_->{operation} eq 'D'; 
+					});
+@entries = slurp_log($parser);
+is(@entries, 2, 'filter should return 2 log entries');
+is($entries[0]->{operation}, 'D');
+is($entries[1]->{operation}, 'N');
+

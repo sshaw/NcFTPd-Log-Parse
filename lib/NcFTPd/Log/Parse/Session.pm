@@ -51,8 +51,8 @@ my %CLOSE_CODE_DESCRIPTIONS = (
 );
 
 my $CLOSE_CODES = join '|', keys %CLOSE_CODE_DESCRIPTIONS;
-my $DIGITS6  = '(\d+),' x 6;
-my $DIGITS16 = '(\d+),' x 16;    
+my $DIGITS6  = '(\d*?),' x 6;
+my $DIGITS16 = '(\d*?),' x 16;    
 my %COMMON_REGEX = __PACKAGE__->_common_regex;
 my @FIELD_NAMES = qw{
     user
@@ -100,17 +100,19 @@ sub _parse_entry
     my $entry;
 
     if($fields) {
-	my @values = $fields =~ m{
-	    ((?:REFUSED|DENIED|.+)),   # Username (does NcFTPd always remove spaces?)
+      #username can be blank, why?
+      #REFUSED does not end in session ID, but closecode
+	my @values = $fields =~ m{				   
+	    ((?:REFUSED|DENIED|.*?)),   # Username (does NcFTPd always remove spaces?)
 	    (.*?),		       # "Email" (anonymous login password)
-	    (.+),		       # Host 
-	    (\d+),		       # Session time
-	    ($COMMON_REGEX{decimal}),  # Time between commands
+	    (.*?),		       # Host 
+	    (\d*?),		       # Session time
+	    ((?:$COMMON_REGEX{decimal})?),  # Time between commands
 	    $DIGITS16		       # 16 comma separated digits
-	    (NONE|$COMMON_REGEX{status}),   # Status of last transfer
+	    ((?:NONE|$COMMON_REGEX{status})?),   # Status of last transfer
 	    $DIGITS6		       # 6 comma separated digits
-	    ($CLOSE_CODES),	       # Close code i.e. why the conection was closed	   
-	    ($COMMON_REGEX{session}),
+	    ($CLOSE_CODES)	       # Close code i.e. why the conection was closed	   
+	    (?:,($COMMON_REGEX{session})?,)?
 	}x;
 
 	if(@values) {

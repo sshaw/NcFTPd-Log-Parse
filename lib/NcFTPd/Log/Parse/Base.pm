@@ -15,43 +15,55 @@ my %COMMON_REGEX = (
     status   => join '|', @TRANSFER_STATUSES
 );
 
-# xfer => $file, expand => [], filter => sub {}
-# $file, expand => 1, ...
-
 sub new
 {
     my ($class, $file, %options) = @_;
+
     croak "usage: $class->new(\$file [, \%options ])" unless $file;
-    croak "$file is a directory" if -d $file;     # On some platforms IO::File will gladly open a directory
+    croak "$file is a directory" if -d $file;  # On some platforms IO::File will gladly open a directory
+    croak 'filter must be a CODE ref' if defined $options{filter} && ref $options{filter} ne 'CODE';
 
     my $log = IO::File->new($file, '<') || croak "Error opening file $file: $!";
-
+      
     bless { 
 	log    => $log, 
 	error  => '',
-	filter => $options{filter}, # Not supported yet
+	filter => $options{filter} || sub { 1 },
 	expand => $options{expand} 
     }, $class;
 }
 
-sub next 
+sub next
 {
-    my $self = shift; 
-    $self->{error} = '';
+  my $self = shift;
+  my $entry;
 
-    my $line  = $self->_next_line or return;
-    my $entry = $self->_parse_line($line);    
+  while($entry = $self->_next_entry) {
+    local $_ = $entry;
+    last if $self->{filter}->();
+  }
 
-    # Don't squash an error message set by a subclass
-    $self->{error} = 'Cannot parse line: unrecognized format' 
-      unless defined $entry or $self->{error};
-
-    $entry;
+  $entry;
 }
 
 sub error 
 { 
     (shift)->{error}  
+}
+
+sub _next_entry
+{
+  my $self = shift; 
+  $self->{error} = '';
+
+  my $line = $self->_next_line or return;
+  my $entry = $self->_parse_line($line);
+
+  # Don't squash an error message set by a subclass
+  $self->{error} = 'Cannot parse line: unrecognized format' 
+    unless $entry or $self->{error};
+
+  $entry;
 }
 
 sub _next_line

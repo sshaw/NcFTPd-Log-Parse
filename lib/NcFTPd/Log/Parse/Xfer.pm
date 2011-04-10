@@ -6,7 +6,7 @@ use base 'NcFTPd::Log::Parse::Base';
 
 # Field names
 use constant {
-    #linked => ''    
+    DESTINATION	      => 'destination',
     DURATION   	      => 'duration',
     EMAIL      	      => 'email',
     HOST       	      => 'host',
@@ -21,6 +21,7 @@ use constant {
     RESERVED3  	      => 'reserved3',
     SESSION_ID	      => 'session_id',
     SIZE              => 'size',
+    SOURCE	      => 'source',
     START_OF_TRANSFER => 'start_of_transfer',
     STARTING_OFFSET   => 'starting_offset',
     STARTING_SIZE     => 'starting_size',
@@ -38,7 +39,10 @@ my %TRANSFER_NOTES = (
     Ps => 'PASV connection',
     Mm => 'Used memory mapped I/O', 
     Bl => 'Used block transfer mode', 
-    Sf => 'Used sendfile'
+    Sf => 'Used sendfile',
+    # This are not documented but they show up in store/retrieve entries		      
+    Ap => 'Unknown',
+    Rz => 'Unknown'		      
 );
 
 my @TRANSFER_STATUSES = __PACKAGE__->_transfer_statuses;
@@ -80,8 +84,7 @@ my $DELETE = {
 
 my $LINK = {
     name   => 'link',
-    # need to fix pathname names
-    fields => [ PATHNAME, RESERVED1, PATHNAME, RESERVED2, USER, EMAIL, HOST, SESSION_ID ],
+    fields => [ SOURCE, RESERVED1, DESTINATION, RESERVED2, USER, EMAIL, HOST, SESSION_ID ],
     regex  => qr{
 	(.+),     # Path of existing file
 	(to),     # Reserved, hardcoded to "to"
@@ -124,8 +127,9 @@ my $STORE = {
 	((?:\.\w+)?),	    	   # Content "translation" (file extention)
 	($COMMON_REGEX{status}),   # Transfer status
 	(A|I),		    	   # FTP transfer mode
-	($COMMON_REGEX{notes}),    # Notes about the transfer
+	((?:$COMMON_REGEX{notes})*?),    # Notes about the transfer
 	(\d+),		    	   # Start of transfer
+	#optional added in later version
 	($COMMON_REGEX{session}),  
 	($COMMON_REGEX{optdigit}), # File size at start of the transfer
 	($COMMON_REGEX{optdigit})  # Position of file start of the transfer
@@ -165,7 +169,7 @@ sub _expand_field
 {
     my ($self, $name, $value) = @_;
 
-    if($name eq TYPE) {
+    if($name eq OPERATION) {
 	$value = $LOG_ENTRIES{$value}->{name};
     }
     elsif($name eq NOTES) {
@@ -190,7 +194,7 @@ sub _parse_entry
     if(!defined $LOG_ENTRIES{$op}) {
 	$self->{error} = "Unknown operation '$op'";
     }
-    else {
+    else {        
 	my @keys = @{$LOG_ENTRIES{$op}->{fields}};
 	my @values = $details =~ $LOG_ENTRIES{$op}->{regex};
 
