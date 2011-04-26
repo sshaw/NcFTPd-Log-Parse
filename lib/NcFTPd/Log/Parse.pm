@@ -112,7 +112,7 @@ Or it can be created directly:
 
     $parser = NcFTPd::Log::Parse::Xfer->new('ftp.log')
 
-Options can be provided to either call to C<new> via a hash:
+Options can be provided to both calls to L<< C<new>|/new >> via a hash:
 
     $parser = NcFTPd::Log::Parse->new(xfer   => 'ftp.log', 
 				      expand => 1, 
@@ -130,7 +130,7 @@ check the L<< C<error>|/error >> method:
     if($parser->error) {
        # it wasn't EOF
     } 
-
+ 
 =head1 METHODS
 
 =head2 new
@@ -141,11 +141,11 @@ a NcFTPd misc, session, or xfer file:
     $parser = NcFTPd::Log::Parse->new($file, %options)
     $parser = NcFTPd::Log::Parse->new(xfer => $file, %options)
 
-B<Returns>
+=head3 Returns
 
 A parser capable of parsing the specified file. 
 
-B<Arguments>
+=head3 Arguments
 
 C<$file>
 
@@ -157,7 +157,7 @@ Or as a part of the options hash, where the key is the log type and the value is
 
     $parser = NcFTPd::Log::Parse->new(xfer => 'ftp.log', %options);    
 
-When C<$file> is given by itself (not as part of a hash) an attempt is made to create the correct 
+When C<$file> is given as a single argument an attempt is made to create the correct 
 parser based on the filename's prefix. These prefixes are based on NcFTPd defaults.
 
 C<%options>
@@ -183,9 +183,7 @@ Create a L<misc log parser|NcFTPd::Log::Parse::Misc> for the given file
 Only return entries that match the filter. By default all entries are returned. 
 
 If the sub reference returns true the entry will be kept, otherwise it's skipped and
-the next line in the file is parsed. 
-
-The current entry is provided to the sub as a hash reference (its parsed form) via the C<$_> variable:
+the next line in the file is parsed. The current entry is provided to the sub as a hash reference (its parsed form) via the C<$_> variable:
 
     filter => sub { 
 	# Uploads by a_user
@@ -195,38 +193,35 @@ The current entry is provided to the sub as a hash reference (its parsed form) v
 
 =item * C<< expand => 1|0 >> 
 
-=item * C<< expand => [ 'field1', 'field2, ... ] >> 
+=item * C<< expand => [ 'field1', 'field2', ... ] >> 
 
 Expand all "expandable" entries, or just the "expandable" entries named in the array reference. 
 Defaults to C<0>, no entries are expanded.
 
 A few types of log entries have cryptic fields. This option will expand these to something you can understand without having
-to refer to the NcFTPd docs. 
-
-A value of C<1> will expand all "expandable" fields, C<0> will not expand any.  
-
+to refer to the NcFTPd docs. A value of C<1> will expand all "expandable" fields, C<0> will not expand any.  
 You can also provide an C<ARRAY> ref containing fields to expand. 
 
 Check the parser specific documentation to see what's expanded.
 
 =back
 
-B<Errors>
+=head3 Errors
 
 If a parser cannot be created an error will be raised. 
 
 =head2 next
 
-Parse and return the next entry in the log or, if a L</filter> has been provided, the next entry matching the filter. 
+Parse and return the next entry in the log or, if a C<filter> been provided, the next entry matching the filter. 
 
-B<Returns>
+=head3 Returns
 
 On success a hash reference is returned. The keys are dependent upon the type of log being parsed, see the 
 L<log specific parser documentation|/NcFTPd::Log::Parse::Xfer> for details. 
 
 On error C<undef> is returned. Call L<< C<error>|/error >> retrieve the reason for the failure.
 
-B<Arguments>
+=head3 Arguments
 
 None
 
@@ -234,15 +229,25 @@ None
   
 Enquire why the last call to  L<< C<next>|/next >> failed. 
 
-B<Returns>
+=head3 Returns
 
 A string containing the error or an empty string if there wasn't an error.
 
-B<Arguments>
+=head3 Arguments
 
 None
+
+=head1 SEE ALSO
+
+L<NcFTPd::Log::Parse::Xfer>, L<NcFTPd::Log::Parse::Session>, L<NcFTPd::Log::Parse::Misc> and 
+the NcFTPd documentation L<http://ncftpd.com/ncftpd/doc/misc>
 
 =head1 AUTHOR
 
 Skye Shaw <sshaw AT lucas.cis.temple.edu>
- 
+
+=head1 COPYRIGHT
+
+Copyright (C) 2011 Skye Shaw
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
