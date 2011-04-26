@@ -187,7 +187,7 @@ the next line in the file is parsed. The current entry is provided to the sub as
 
     filter => sub { 
 	# Uploads by a_user
-        $_->{username}  eq 'a_user' &&
+        $_->{user} eq 'a_user' &&
 	$_->{operation} eq 'S'
     }
 

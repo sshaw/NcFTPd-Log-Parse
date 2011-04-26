@@ -34,13 +34,13 @@ use constant {
 };
 
 my %TRANSFER_NOTES = (
-    Df => 'FTP default data connection (non-passive out to port 20) was used (rare)', #change this
+    Df => 'FTP default data connection was used', 
     Po => 'PORT connection',
     Ps => 'PASV connection',
     Mm => 'Used memory mapped I/O',
     Bl => 'Used block transfer mode',
     Sf => 'Used sendfile',
-    # This are not documented but they show up in store/retrieve entries
+    # These are not documented but they show up in store/retrieve entries
     Ap => 'Unknown',
     Rz => 'Unknown'
 );
@@ -117,22 +117,24 @@ my $STORE = {
     fields => [ PATHNAME, SIZE, DURATION, RATE, USER, EMAIL, HOST, SUFFIX, STATUS,
 		TYPE, NOTES, START_OF_TRANSFER, SESSION_ID, STARTING_SIZE, STARTING_OFFSET ],
     regex => qr{
-	(.+),		   # Path
-	(\d+),		   # Size
+	(.+),		   	   # Path
+	(\d+),		   	   # Size
 	($COMMON_REGEX{decimal}),  # Durtaion
 	($COMMON_REGEX{decimal}),  # Transfer rate
-	(.+),		   # User
-	(.*?),		   # Email
-	(.+),		   # Peer
+	(.+),		   	   # User
+	(.*?),		   	   # Email
+	(.+),		   	   # Peer
 	((?:\.\w+)?),		   # Content "translation" (file extention)
 	($COMMON_REGEX{status}),   # Transfer status
 	(A|I),			   # FTP transfer mode
-	((?:$COMMON_REGEX{notes})*?),    # Notes about the transfer
-	(\d+),			   # Start of transfer
-	#optional added in later version
-	($COMMON_REGEX{session}),
-	($COMMON_REGEX{optdigit}), # File size at start of the transfer
-	($COMMON_REGEX{optdigit})  # Position of file start of the transfer
+	((?:$COMMON_REGEX{notes})*?), # Notes about the transfer
+	(\d+)			      # Start of transfer
+	#optional, added in later version
+	(?:,
+	  ($COMMON_REGEX{session}),
+	  ($COMMON_REGEX{optdigit}), # File size at start of the transfer
+	  ($COMMON_REGEX{optdigit}), # Position of file start of the transfer
+	)?
     }x
 };
 
